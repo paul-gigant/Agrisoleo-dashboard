@@ -293,8 +293,8 @@ def run_script(n_clicks):
     if not n_clicks:
         raise PreventUpdate
     
-    run_meta_analyse()
-    #return exec(open('meta_analyse_v3.py').read())
+    #run_meta_analyse()
+    return exec(open('meta_analyse_v3.py').read())
     
 
 # Callback
