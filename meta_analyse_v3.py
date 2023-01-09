@@ -28,7 +28,6 @@ print('fin de la fonction extraction meta_data')
 
 #sauvegarder meta_data pour test dash sans reload exel files
 file_path = os.path.join(os.getcwd(), 'sauvegarde')
-# with  open ('sauvegarde',"wb") as f:
-#     dump (meta_data, f)
-with open(file_path, 'w') as f:
-    f.write(meta_data)
+
+with open(file_path, 'wb') as f:
+    dump (meta_data, f)
