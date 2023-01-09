@@ -301,8 +301,8 @@ def run_script(n_clicks):
 @app.callback(
     Output(component_id="graph", component_property="figure"),
     Output(component_id="table", component_property="children"),
-    Output(component_id="img_config", component_property="children"), 
-    Output(component_id="img_heatmap", component_property="children"), 
+    #Output(component_id="img_config", component_property="children"), 
+    #Output(component_id="img_heatmap", component_property="children"), 
     Input(component_id="dropdown_periode", component_property="value"),
     Input(component_id="parameter_choice", component_property="value"),
     Input(component_id="dropdown_pilotage", component_property="value"),
