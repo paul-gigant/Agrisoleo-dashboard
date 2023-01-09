@@ -27,5 +27,8 @@ meta_data = [data_analysis(i,j) for (i,j) in enumerate(files_xlsx)]
 print('fin de la fonction extraction meta_data')
 
 #sauvegarder meta_data pour test dash sans reload exel files
-f = open ('sauvegarde',"wb")
-dump (meta_data, f)
+file_path = os.path.join(os.getcwd(), 'sauvegarde')
+# with  open ('sauvegarde',"wb") as f:
+#     dump (meta_data, f)
+with open(file_path, 'w') as f:
+    f.write(meta_data)
