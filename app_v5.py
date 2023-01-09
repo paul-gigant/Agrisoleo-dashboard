@@ -301,8 +301,8 @@ def run_script(n_clicks):
 @app.callback(
     Output(component_id="graph", component_property="figure"),
     Output(component_id="table", component_property="children"),
-    #Output(component_id="img_config", component_property="children"), 
-    #Output(component_id="img_heatmap", component_property="children"), 
+    Output(component_id="img_config", component_property="children"), 
+    Output(component_id="img_heatmap", component_property="children"), 
     Input(component_id="dropdown_periode", component_property="value"),
     Input(component_id="parameter_choice", component_property="value"),
     Input(component_id="dropdown_pilotage", component_property="value"),
@@ -386,38 +386,38 @@ def select_data_use_for_display(period,parameter,pilotage,azimut,ecart,ecarty,ha
     # Create table from dataframe
     table_content = generate_table(dfff)
 
-    # # Create displayed configuration images 
-    # configuration_images = display_png_image(image_path.iloc[:,0].tolist())
+    # Create displayed configuration images 
+    configuration_images = display_png_image(image_path.iloc[:,0].tolist())
 
-    # # Create displayed heatmap images
-    # if units == 'Fraction':
-    #     heatmap_images = display_png_image(image_path.iloc[:,3].tolist())
-    # elif units == 'Irradiance':
-    #     heatmap_images = display_png_image(image_path.iloc[:,1].tolist())
-    # elif units == 'PAR':
-    #     heatmap_images = display_png_image(image_path.iloc[:,2].tolist())
-    # elif units =='PARjour':
-    #     heatmap_images = display_png_image(image_path.iloc[:,2].tolist())
+    # Create displayed heatmap images
+    if units == 'Fraction':
+        heatmap_images = display_png_image(image_path.iloc[:,3].tolist())
+    elif units == 'Irradiance':
+        heatmap_images = display_png_image(image_path.iloc[:,1].tolist())
+    elif units == 'PAR':
+        heatmap_images = display_png_image(image_path.iloc[:,2].tolist())
+    elif units =='PARjour':
+        heatmap_images = display_png_image(image_path.iloc[:,2].tolist())
 
-    return fig_bar, table_content #, configuration_images, heatmap_images 
+    return fig_bar, table_content, configuration_images, heatmap_images 
 
-# # Download meta data 
-# @app.callback(
-#     Output("download-dataframe-xlsx", "data"),
-#     Input("btn_xlsx", "n_clicks"),
-#     prevent_initial_call=True,
-# )
-# def func(n_clicks):
-#     return dcc.send_data_frame(df_meta_data.to_excel, "metadata.xlsx", sheet_name="Sheet_name_1")
+# Download meta data 
+@app.callback(
+    Output("download-dataframe-xlsx", "data"),
+    Input("btn_xlsx", "n_clicks"),
+    prevent_initial_call=True,
+)
+def func(n_clicks):
+    return dcc.send_data_frame(df_meta_data.to_excel, "metadata.xlsx", sheet_name="Sheet_name_1")
 
-# # Download results table
-# @app.callback(
-#     Output(component_id="download-result-xlsx", component_property="data"),
-#     Input(component_id="table_xlsx", component_property="n_clicks"),
-#     prevent_initial_call=True,
-# )
-# def function(n_clicks):
-#     return dcc.send_data_frame(dfff.to_excel, "results.xlsx", sheet_name="Sheet_name_1")
+# Download results table
+@app.callback(
+    Output(component_id="download-result-xlsx", component_property="data"),
+    Input(component_id="table_xlsx", component_property="n_clicks"),
+    prevent_initial_call=True,
+)
+def function(n_clicks):
+    return dcc.send_data_frame(dfff.to_excel, "results.xlsx", sheet_name="Sheet_name_1")
 
 
 # Run the app 
