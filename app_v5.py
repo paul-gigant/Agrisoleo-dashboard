@@ -19,6 +19,8 @@ from analyse_v8 import data_analysis
 from pickle import *
 import os
 
+from run_meta_analyse_V3 import run_meta_analyse
+
 app = Dash(__name__)
 
 server = app.server
@@ -127,7 +129,9 @@ def create_layout():
         html.Br(),
         html.Div([
                 html.Button("Download metadata", id="btn_xlsx"),
-                dcc.Download(id="download-dataframe-xlsx"),
+                dcc.Download(
+                    id="download-dataframe-xlsx",
+                )   
             ]),
         html.Div(children= [
             html.Div(children=[
@@ -289,8 +293,9 @@ def run_script(n_clicks):
     if not n_clicks:
         raise PreventUpdate
     
-    return exec(open('meta_analyse_v3.py').read())
-  
+    run_meta_analyse()
+    #return exec(open('meta_analyse_v3.py').read())
+    
 
 # Callback
 @app.callback(
