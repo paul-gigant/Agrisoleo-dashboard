@@ -21,7 +21,7 @@ import os
 
 from run_meta_analyse_V3 import run_meta_analyse
 
-app = Dash(__name__)
+app = Dash(__name__,title='Agrisoleo : SaaS dashboard')
 
 server = app.server
 
