@@ -11,8 +11,7 @@ from pickle import *
 # List .xlsx files in the working directory 
 path = os.getcwd()
 files = os.listdir(path)
-#files_xlsx = [f for f in files if f[-4:] == 'xlsx']
-files_xlsx = 'Batch_MATURATION_MN_2020_hour_GMT0_P5_A0_Dunois_BLE_MATURATION.xlsx'
+files_xlsx = [f for f in files if f[-4:] == 'xlsx']
 
 # Create /img directory to save all .png 
 if os.path.exists('img') == True:
