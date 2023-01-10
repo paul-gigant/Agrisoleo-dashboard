@@ -293,8 +293,8 @@ def run_script(n_clicks):
     if not n_clicks:
         raise PreventUpdate
     
-    #run_meta_analyse()
-    return exec(open('meta_analyse_v3.py').read())
+    return run_meta_analyse()
+    #return exec(open('meta_analyse_v3.py').read())
     
 
 # Callback
@@ -422,4 +422,4 @@ def function(n_clicks):
 
 # Run the app 
 if __name__ == '__main__':
-    app.run_server(debug=True,port = 8051)
+    app.run_server(debug=True,port = 8052)
