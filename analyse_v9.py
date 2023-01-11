@@ -1,7 +1,7 @@
 ######################################################################################
 # This program is the list of functions used to extract and compute the data for one simulation.
-# The function 'data_analysis' is called for meta analysis in 'meta_analyse_v1.py'. 
-# Last update : 03/12/2023 
+# anaylse_v9 do the exact same thing as anylse_v8 but convert xlsx files to csv before
+# Last update : 11/01/2023 
 ######################################################################################
 
 # List of python librairies : 
