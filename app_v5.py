@@ -13,25 +13,24 @@ import plotly.express as px
 import pandas as pd
 import pickle
 import base64
-import datetime
 from dash import dash_table
-from analyse_v8 import data_analysis
-from pickle import *
 import os
-
+import datetime
+import shutil
 from run_meta_analyse_V3 import run_meta_analyse
 
-app = Dash(__name__,title='Agrisoleo : SaaS dashboard')
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = Dash(__name__,external_stylesheets=external_stylesheets,title='Agrisoleo : SaaS dashboard')
 
 server = app.server
 
 def format_meta_data():
+    global df_meta_data
     if os.path.isfile('sauvegarde') == True:
         # Open and clean data : 
         f = open('sauvegarde','rb')
         meta_data = pickle.load(f)
         print('sauvegarde file exists')
-
     else:
         meta_data = [[0]*44] * 44
         print('there is no sauvegarde file in working directory')
@@ -94,8 +93,15 @@ def generate_table(dataframe):
             )
 
 def display_png_image(image_filename):
-    encoded_image = [base64.b64encode(open(i, 'rb').read()) for i in image_filename]
-    return [html.Img(src='data:image/png;base64,{}'.format(encoded_image[i].decode())) for i in range(len(image_filename))]
+    if image_filename[0] == 0:
+        i= 'Draft_img/draft_img.png'
+        encoded_image = [base64.b64encode(open(i, 'rb').read())]
+        displayed_images=[html.Img(src='data:image/png;base64,{}'.format(encoded_image[0].decode()))]
+    else:
+        encoded_image = [base64.b64encode(open(i, 'rb').read()) for i in image_filename]
+        displayed_images=[html.Img(src='data:image/png;base64,{}'.format(encoded_image[i].decode())) for i in range(len(image_filename))]
+    
+    return displayed_images
 
 def find_parameter_of_interest_in_batch(df):
     # filter only configuration parameters 
@@ -113,7 +119,7 @@ def find_parameter_of_interest_in_batch(df):
 
 
 # Creation of the layout
-def create_layout():
+def create_layout(df_meta_data):
     return html.Div(children=[
         html.Img(src='https://www.agrisoleo.fr/images/logo.gif'),
         html.Div(children=[
@@ -121,11 +127,17 @@ def create_layout():
         ],
         style={'width':'100%','display': 'inline-block'}
         ),
-        html.Div([
+        html.Div(children=[
+            html.Div(children=[
                 html.Button("Process data", id="runsript"),
-                html.Div(id='output-container-button',
-                                children='Hit the button to update.')
+                html.Button("Reset data", id="reset"),
+            ],
+            style={'display': 'inline-block'}
+            ),
+            html.Div(id='output-container-button', children='Hit the button to update.'),
+            html.Div(id='hidden-div', style={'display':'none'})
         ]),
+
         html.Br(),
         html.Div([
                 html.Button("Download metadata", id="btn_xlsx"),
@@ -152,7 +164,7 @@ def create_layout():
                     ),
             ]),
         
-            html.H4('Choix des parametres de comparaison (le parametre d\'interet n\'a pas d\'action) :'),
+            html.H4('Choix des paramètres de comparaison :'),
 
             html.Div(children=[
                 html.Div(children=[
@@ -269,7 +281,7 @@ def create_layout():
 
         html.Div(children=[
             html.Br(),
-            html.H4('Affichage des cartes irradiances cumulées correspondantes :'),
+            html.H4('Affichage des cartes d\'irradiances cumulées correspondantes :'),
             html.Div(
                 id='img_heatmap',
                 style={'width':'150%','display': 'inline-block'}
@@ -279,7 +291,7 @@ def create_layout():
         ),
     ])
 
-app.layout= create_layout()
+app.layout= create_layout(df_meta_data)
 
 
 # Run meta_analyse_v3.py
@@ -289,14 +301,32 @@ app.layout= create_layout()
     prevent_initial_call=True,
 )
 def run_script(n_clicks):
+    global df_meta_data
     # Don't run unless the button has been pressed...
     if not n_clicks:
         raise PreventUpdate
     
-    return run_meta_analyse()
-    #return exec(open('meta_analyse_v3.py').read())
-    
+    run_meta_analyse()
+    df_meta_data = format_meta_data()
+    app.layout = create_layout(df_meta_data)
+    return html.Div(f"Data reloaded at {datetime.datetime.now()}")
 
+# Clear data, i.e : delete /img folder and sauvegarde file
+@app.callback(
+    Output('hidden-div', 'children'),
+    Input("reset", "n_clicks"),
+    prevent_initial_call=True,
+)
+def reset(n_clicks):
+    global df_meta_data
+    # Don't run unless the button has been pressed...
+    if not n_clicks:
+        raise PreventUpdate
+    shutil.rmtree('img')
+    os.remove('sauvegarde')
+    df_meta_data = format_meta_data()
+    app.layout = create_layout(df_meta_data)
+    
 # Callback
 @app.callback(
     Output(component_id="graph", component_property="figure"),
@@ -314,15 +344,19 @@ def run_script(n_clicks):
     Input(component_id="units_choice", component_property="value"),
 )
 def select_data_use_for_display(period,parameter,pilotage,azimut,ecart,ecarty,hauteur,tracker,units):
-    # Filtering for period 
+    # Load sauvegarde file
+   # f = open('sauvegarde','rb')
+    #meta_data = pickle.load(f)
+    global df_meta_data
     df_meta_data = format_meta_data()
-
-    df_periode = df_meta_data
-    mask_periode = df_periode['start_date'] == period
-    df_periode2 = df_periode[mask_periode]
+    # Filtering for period
     
+    mask_periode = df_meta_data['start_date'] == period
+    df_periode = df_meta_data[mask_periode]
+
     # Filtering for bar graph
-    df = df_periode2
+    df = df_periode
+    
     if parameter == 'azimut':
         mask = (df['backtracking']==pilotage) &  (df['xgap_module']==ecart) &  (df['ygap_module']==ecarty) &  (df['hauteur']==hauteur) &  (df['tracker']==tracker)
     elif parameter == 'xgap_module':
@@ -337,7 +371,6 @@ def select_data_use_for_display(period,parameter,pilotage,azimut,ecart,ecarty,ha
         mask = (df['backtracking']==pilotage) &  (df['xgap_module']==ecart) &  (df['ygap_module']==ecarty) &  (df['hauteur']==hauteur) &  (df['azimut']==azimut)
 
     dff = df[mask]
-    
     
     # Filtering for table & bar graph   
     global dfff
@@ -360,7 +393,6 @@ def select_data_use_for_display(period,parameter,pilotage,azimut,ecart,ecarty,ha
     
     # Filtering for image display
     image_path = dff[['name_png_config','name_png_heatmap','name_png_heatmap_PAR','name_png_heatmap_Fraction']] 
-    
 
     # Create figure from dataframe
     fig_bar = px.bar(dff, x=parameter, y=list_bar, 

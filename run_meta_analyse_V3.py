@@ -1,13 +1,10 @@
-import subprocess
-import time
 import os
 import shutil
-from analyse_v8 import data_analysis
+from analyse_v9 import data_analysis
 from pickle import *
 
 def run_meta_analyse():
-    #subprocess.run(['python', 'meta_analyse_v3.py'], shell=True)
-
+    
     # List .xlsx files in the working directory 
     path = os.getcwd()
     files = os.listdir(path)
