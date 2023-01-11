@@ -117,7 +117,6 @@ def find_parameter_of_interest_in_batch(df):
 
     return list_columns_of_interest
 
-
 # Creation of the layout
 def create_layout(df_meta_data):
     return html.Div(children=[
@@ -127,6 +126,17 @@ def create_layout(df_meta_data):
         ],
         style={'width':'100%','display': 'inline-block'}
         ),
+    
+        dcc.Upload(
+            id = 'dataload',children=[
+            'Drag and Drop or ', html.A('Select a Folder')
+            ], 
+            style={'width': '30%','height': '60px','lineHeight': '60px','borderWidth': '1px','borderStyle': 'dashed','borderRadius': '5px',
+            'textAlign': 'center','margin-left': 'auto', 'margin-right': 'auto'},
+            multiple=True,
+        ),
+        html.Div(id='hidden-div-upload', style={'display':'none'}),
+
         html.Div(children=[
             html.Div(children=[
                 html.Button("Process data", id="runsript"),
@@ -292,6 +302,16 @@ def create_layout(df_meta_data):
     ])
 
 app.layout= create_layout(df_meta_data)
+
+# Take all the .xlsx files in the uploader folder and place them in the working directory
+@app.callback(
+    Output('hidden-div-upload','children'),
+    Input('dataload','contents'),
+    prevent_initial_call=True,
+)
+def put_upload_content_in_workingdirectory(contents):
+    print('im here')
+    
 
 
 # Run meta_analyse_v3.py
