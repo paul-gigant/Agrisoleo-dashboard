@@ -3,3 +3,4 @@ venv
 .DS_Store
 .env
 analyse_v9.py
+app_v5_copy.py
