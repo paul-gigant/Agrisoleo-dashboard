@@ -398,8 +398,10 @@ def reset(n_clicks):
         raise PreventUpdate
 
     # Remove /img, sauvegarde and all .xlsx files
-    shutil.rmtree('img')
-    os.remove('sauvegarde')
+    if os.path.exists('img') == True:
+        shutil.rmtree('img')
+    if os.path.exists('sauvegarde') == True:
+        os.remove('sauvegarde')
     for file in os.listdir():
         if file.endswith('.xlsx'):
             os.remove(file)
