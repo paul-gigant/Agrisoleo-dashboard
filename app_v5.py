@@ -354,10 +354,9 @@ def put_upload_content_in_workingdirectory(uploaded_filenames, uploaded_file_con
     for name, data in zip(uploaded_filenames, uploaded_file_contents):
         save_file(name, data)
         
-
 # Run meta_analyse_v3.py
-#@app.long_callback(
-@app.callback(
+@app.long_callback(
+#@app.callback(
     Output('hidden-div2', 'children'),
     Input("runsript", "n_clicks"),
     running=[
