@@ -9,6 +9,8 @@
 
 from dash import Dash, html, dcc, Input, Output, State
 from dash.exceptions import PreventUpdate
+from dash.long_callback import DiskcacheLongCallbackManager
+import diskcache
 import plotly.express as px
 import pandas as pd
 import pickle
@@ -17,11 +19,13 @@ from dash import dash_table
 import os
 import datetime
 import shutil
+import time
 from run_meta_analyse_V3 import run_meta_analyse
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = Dash(__name__,external_stylesheets=external_stylesheets,title='Agrisoleo : SaaS dashboard')
-
+cache = diskcache.Cache("./cache")
+long_callback_manager = DiskcacheLongCallbackManager(cache)
+app = Dash(__name__,external_stylesheets=external_stylesheets,title='Agrisoleo : SaaS dashboard',long_callback_manager=long_callback_manager)
 server = app.server
 
 def format_meta_data():
@@ -117,6 +121,40 @@ def find_parameter_of_interest_in_batch(df):
 
     return list_columns_of_interest
 
+def save_file(name, content):
+    """Save a file uploaded in the Dash component"""
+    data = content.encode("utf8").split(b";base64,")[1]
+    with open(name, "wb") as fp:
+        fp.write(base64.decodebytes(data))
+
+# Not used for now
+def set_layout_options(df_meta_data):
+    ''' Layout in order : "dropdown_periode","parameter_choice", dropdown_pilotage,dropdown_azimut
+    dropdown_ecart,dropdown_ecarty,hauteur,tracker,units_choice 
+    type : component_id'''
+
+    dropdown_periode_option=[{'label':i, 'value':i} for i in df_meta_data.iloc[:,2].astype(str).unique()]
+    parameter_choice_option=[{'label':i, 'value':i} for i in find_parameter_of_interest_in_batch(df_meta_data)]
+    dropdown_pilotage_option=[{'label':str(i), 'value': i} for i in df_meta_data.iloc[:,20].unique()]              
+    dropdown_azimut_option=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,6].unique()]
+    dropdown_ecart_option=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,9].unique()]
+    dropdown_ecarty_option=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,10].unique()]
+    return [dropdown_periode_option, parameter_choice_option, dropdown_pilotage_option,dropdown_azimut_option,dropdown_ecart_option,dropdown_ecarty_option]
+
+def set_layout_values(df_meta_data):
+    ''' Layout in order : "dropdown_periode","parameter_choice", dropdown_pilotage,dropdown_azimut
+    dropdown_ecart,dropdown_ecarty,hauteur,tracker,units_choice 
+    type : value'''
+
+    dropdown_periode_value = df_meta_data.iloc[0,2]
+    parameter_choice_value = find_parameter_of_interest_in_batch(df_meta_data)[0]
+    dropdown_pilotage_value = df_meta_data.iloc[0,20]
+    dropdown_azimut_value=df_meta_data.iloc[0,6]
+    dropdown_ecart_value=df_meta_data.iloc[0,9]
+    dropdown_ecarty_value=df_meta_data.iloc[0,10]
+                        
+    return [dropdown_periode_value, parameter_choice_value,dropdown_pilotage_value,dropdown_azimut_value,dropdown_ecart_value,dropdown_ecarty_value]
+
 # Creation of the layout
 def create_layout(df_meta_data):
     return html.Div(children=[
@@ -129,7 +167,7 @@ def create_layout(df_meta_data):
     
         dcc.Upload(
             id = 'dataload',children=[
-            'Drag and Drop or ', html.A('Select a Folder')
+            'Drag and Drop or ', html.A('Select files')
             ], 
             style={'width': '30%','height': '60px','lineHeight': '60px','borderWidth': '1px','borderStyle': 'dashed','borderRadius': '5px',
             'textAlign': 'center','margin-left': 'auto', 'margin-right': 'auto'},
@@ -144,10 +182,10 @@ def create_layout(df_meta_data):
             ],
             style={'display': 'inline-block'}
             ),
-            html.Div(id='output-container-button', children='Hit the button to update.'),
-            html.Div(id='hidden-div', style={'display':'none'})
+            html.Div(id='hidden-div', style={'display':'none'}),
+            html.Div(id='hidden-div2', style={'display':'none'}),  
         ]),
-
+        html.Progress(id="progress_bar"),
         html.Br(),
         html.Div([
                 html.Button("Download metadata", id="btn_xlsx"),
@@ -306,30 +344,45 @@ app.layout= create_layout(df_meta_data)
 # Take all the .xlsx files in the uploader folder and place them in the working directory
 @app.callback(
     Output('hidden-div-upload','children'),
+    Input('dataload','filename'),
     Input('dataload','contents'),
     prevent_initial_call=True,
 )
-def put_upload_content_in_workingdirectory(contents):
-    print('im here')
-    
-
-
+def put_upload_content_in_workingdirectory(uploaded_filenames, uploaded_file_contents):
+    """Save uploaded files and move them to the current directory"""
+        
+    for name, data in zip(uploaded_filenames, uploaded_file_contents):
+        save_file(name, data)
+        
 # Run meta_analyse_v3.py
+#@app.long_callback(
 @app.callback(
-    Output('output-container-button', 'children'),
+    Output('hidden-div2', 'children'),
     Input("runsript", "n_clicks"),
-    prevent_initial_call=True,
+    running=[
+        (Output("runsript", "disabled"), True, False),
+        (
+            Output("progress_bar", "style"),
+            {"visibility": "visible"},
+            {"visibility": "hidden"},
+        ),
+    ],
+    manager=long_callback_manager,
 )
 def run_script(n_clicks):
+    '''Run function meta_analyse from 'run_meta_analyse.py'
+    i.e: process the data when trigger and reload the page for display '''
+    
     global df_meta_data
-    # Don't run unless the button has been pressed...
     if not n_clicks:
         raise PreventUpdate
     
     run_meta_analyse()
     df_meta_data = format_meta_data()
+    select_data_use_for_display(df_meta_data)
     app.layout = create_layout(df_meta_data)
-    return html.Div(f"Data reloaded at {datetime.datetime.now()}")
+    
+    return html.Meta(httpEquiv="refresh",content="1")
 
 # Clear data, i.e : delete /img folder and sauvegarde file
 @app.callback(
@@ -338,16 +391,27 @@ def run_script(n_clicks):
     prevent_initial_call=True,
 )
 def reset(n_clicks):
+    '''Reset data stored in working directory and reload page with empty value
+    Delete 'sauvegarde', '/img' and all excel files '''
+
     global df_meta_data
-    # Don't run unless the button has been pressed...
     if not n_clicks:
         raise PreventUpdate
-    shutil.rmtree('img')
-    os.remove('sauvegarde')
+
+    # Remove /img, sauvegarde and all .xlsx files
+    if os.path.exists('img') == True:
+        shutil.rmtree('img')
+    if os.path.exists('sauvegarde') == True:
+        os.remove('sauvegarde')
+    for file in os.listdir():
+        if file.endswith('.xlsx'):
+            os.remove(file)
+    
     df_meta_data = format_meta_data()
     app.layout = create_layout(df_meta_data)
-    
-# Callback
+    return html.Meta(httpEquiv="refresh",content="1")
+
+# Callback for display
 @app.callback(
     Output(component_id="graph", component_property="figure"),
     Output(component_id="table", component_property="children"),
@@ -364,6 +428,7 @@ def reset(n_clicks):
     Input(component_id="units_choice", component_property="value"),
 )
 def select_data_use_for_display(period,parameter,pilotage,azimut,ecart,ecarty,hauteur,tracker,units):
+    ''' Process the result of the meta_analyse in order for proper display in the layout '''
 
     global df_meta_data
     df_meta_data = format_meta_data()
@@ -459,6 +524,7 @@ def select_data_use_for_display(period,parameter,pilotage,azimut,ecart,ecarty,ha
     prevent_initial_call=True,
 )
 def func(n_clicks):
+    ''' Download the meta data created by 'run_meta_analyse.py' '''
     return dcc.send_data_frame(df_meta_data.to_excel, "metadata.xlsx", sheet_name="Sheet_name_1")
 
 # Download results table
@@ -468,9 +534,10 @@ def func(n_clicks):
     prevent_initial_call=True,
 )
 def function(n_clicks):
+    ''' Download the data contained in the html.Table '''
     return dcc.send_data_frame(dfff.to_excel, "results.xlsx", sheet_name="Sheet_name_1")
 
 
 # Run the app 
 if __name__ == '__main__':
-    app.run_server(debug=True,port = 8052)
+    app.run(debug=True,port = 8052)

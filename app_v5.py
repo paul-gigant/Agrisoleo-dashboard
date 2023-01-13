@@ -87,6 +87,7 @@ def format_meta_data():
                                 ])
     return df_meta_data
 
+global df_meta_data
 df_meta_data = format_meta_data()
 
 # list of used functions 
@@ -139,7 +140,11 @@ def set_layout_options(df_meta_data):
     dropdown_azimut_option=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,6].unique()]
     dropdown_ecart_option=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,9].unique()]
     dropdown_ecarty_option=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,10].unique()]
-    return [dropdown_periode_option, parameter_choice_option, dropdown_pilotage_option,dropdown_azimut_option,dropdown_ecart_option,dropdown_ecarty_option]
+    hauteur_option=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,15].unique()]
+    tracker_option=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,17].unique()]
+    unit_choice_option=[{'label':'Fraction (%)','value': 'Fraction'},{'label':'Irradiance (W/m2)','value': 'Irradiance'},{'label':'PAR (W/m2)','value': 'PAR'},{'label':'PAR journalier(W/m2/day)','value': 'PARjour'}]
+                
+    return [dropdown_periode_option, parameter_choice_option, dropdown_pilotage_option,dropdown_azimut_option,dropdown_ecart_option,dropdown_ecarty_option,hauteur_option,tracker_option,unit_choice_option]
 
 def set_layout_values(df_meta_data):
     ''' Layout in order : "dropdown_periode","parameter_choice", dropdown_pilotage,dropdown_azimut
@@ -152,12 +157,15 @@ def set_layout_values(df_meta_data):
     dropdown_azimut_value=df_meta_data.iloc[0,6]
     dropdown_ecart_value=df_meta_data.iloc[0,9]
     dropdown_ecarty_value=df_meta_data.iloc[0,10]
+    hauteur_value=df_meta_data.iloc[0,15]
+    tracker_value=df_meta_data.iloc[0,17]
+    units_choice_value = 'Fraction'
                         
-    return [dropdown_periode_value, parameter_choice_value,dropdown_pilotage_value,dropdown_azimut_value,dropdown_ecart_value,dropdown_ecarty_value]
+    return [dropdown_periode_value, parameter_choice_value,dropdown_pilotage_value,dropdown_azimut_value,dropdown_ecart_value,dropdown_ecarty_value,hauteur_value,tracker_value,units_choice_value]
 
 # Creation of the layout
 def create_layout(df_meta_data):
-    return html.Div(children=[
+   return html.Div(children=[ 
         html.Img(src='https://www.agrisoleo.fr/images/logo.gif'),
         html.Div(children=[
             html.H1('AGRISOLEO : Data Vizualisation Tool', style={'textAlign': 'center'}),
@@ -198,16 +206,20 @@ def create_layout(df_meta_data):
                 html.H4('Selection de la période étudiée :'),
                 dcc.Dropdown(
                     id="dropdown_periode",
-                    options=[{'label':i, 'value':i} for i in df_meta_data.iloc[:,2].astype(str).unique()], 
-                    value = df_meta_data.iloc[0,2],
+                    #options=[{'label':i, 'value':i} for i in df_meta_data.iloc[:,2].astype(str).unique()], 
+                    #value = df_meta_data.iloc[0,2],
+                    options = set_layout_options(df_meta_data)[0],
+                    value = set_layout_values(df_meta_data)[0],
                     clearable=False,
                     style={}
                 ),
                 html.H4('Choix du paramètre d\'interet :'),
                 dcc.RadioItems(
                     id = "parameter_choice",
-                    options=[{'label':i, 'value':i} for i in find_parameter_of_interest_in_batch(df_meta_data)],
-                    value = find_parameter_of_interest_in_batch(df_meta_data)[0],
+                    #options=[{'label':i, 'value':i} for i in find_parameter_of_interest_in_batch(df_meta_data)],
+                    #value = find_parameter_of_interest_in_batch(df_meta_data)[0],
+                    options = set_layout_options(df_meta_data)[1],
+                    value = set_layout_values(df_meta_data)[1],
                     inline=True,
                     ),
             ]),
@@ -219,8 +231,10 @@ def create_layout(df_meta_data):
                     html.P('Pilotage solaire :'),
                     dcc.Dropdown(
                         id="dropdown_pilotage",
-                        options=[{'label':str(i), 'value': i} for i in df_meta_data.iloc[:,20].unique()], 
-                        value=df_meta_data.iloc[0,20],
+                        #options=[{'label':str(i), 'value': i} for i in df_meta_data.iloc[:,20].unique()], 
+                        #value=df_meta_data.iloc[0,20],
+                        options = set_layout_options(df_meta_data)[2],
+                        value = set_layout_values(df_meta_data)[2],
                         clearable=False,
                         ),
                 ],
@@ -231,8 +245,10 @@ def create_layout(df_meta_data):
                     html.P('Azimut :'),
                     dcc.Dropdown(
                         id="dropdown_azimut",
-                        options=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,6].unique()],
-                        value=df_meta_data.iloc[0,6],
+                        #options=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,6].unique()],
+                        #value=df_meta_data.iloc[0,6],
+                        options = set_layout_options(df_meta_data)[3],
+                        value = set_layout_values(df_meta_data)[3],
                         clearable=False,
                     ),
                 ],
@@ -243,8 +259,10 @@ def create_layout(df_meta_data):
                     html.P('Ecart inter-rang (x-direction) :'),
                     dcc.Dropdown(
                         id="dropdown_ecart",
-                        options=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,9].unique()],
-                        value=df_meta_data.iloc[0,9],
+                        #options=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,9].unique()],
+                        #value=df_meta_data.iloc[0,9],
+                        options = set_layout_options(df_meta_data)[4],
+                        value = set_layout_values(df_meta_data)[4],
                         clearable=False,
                     ),
                 ],
@@ -255,8 +273,10 @@ def create_layout(df_meta_data):
                     html.P('Ecart inter-rang (y-direction) :'),
                     dcc.Dropdown(
                         id="dropdown_ecarty",
-                        options=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,10].unique()],
-                        value=df_meta_data.iloc[0,10],
+                        #options=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,10].unique()],
+                        #value=df_meta_data.iloc[0,10],
+                        options = set_layout_options(df_meta_data)[5],
+                        value = set_layout_values(df_meta_data)[5],
                         clearable=False,
                     ),
                 ],
@@ -267,8 +287,10 @@ def create_layout(df_meta_data):
                     html.P('Hauteur tables'),
                     dcc.Dropdown(
                         id="hauteur",
-                        options=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,15].unique()],
-                        value=df_meta_data.iloc[0,15],
+                        #options=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,15].unique()],
+                        #value=df_meta_data.iloc[0,15],
+                        options = set_layout_options(df_meta_data)[6],
+                        value = set_layout_values(df_meta_data)[6],
                         clearable=False,
                     ),
                 ],
@@ -279,8 +301,10 @@ def create_layout(df_meta_data):
                     html.P('Tracker/fixe'),
                     dcc.Dropdown(
                         id="tracker",
-                        options=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,17].unique()],
-                        value=df_meta_data.iloc[0,17],
+                        #options=[{'label':str(i), 'value':i} for i in df_meta_data.iloc[:,17].unique()],
+                        #value=df_meta_data.iloc[0,17],
+                        options = set_layout_options(df_meta_data)[7],
+                        value = set_layout_values(df_meta_data)[7],
                         clearable=False,
                     ),
                 ],
@@ -301,8 +325,10 @@ def create_layout(df_meta_data):
             html.H4('Selection des unités :'),
             dcc.RadioItems(
                 id = "units_choice",
-                options=[{'label':'Fraction (%)','value': 'Fraction'},{'label':'Irradiance (W/m2)','value': 'Irradiance'},{'label':'PAR (W/m2)','value': 'PAR'},{'label':'PAR journalier(W/m2/day)','value': 'PARjour'}],
-                value = 'Fraction',
+                #options=[{'label':'Fraction (%)','value': 'Fraction'},{'label':'Irradiance (W/m2)','value': 'Irradiance'},{'label':'PAR (W/m2)','value': 'PAR'},{'label':'PAR journalier(W/m2/day)','value': 'PARjour'}],
+                #value = 'Fraction',
+                options = set_layout_options(df_meta_data)[8],
+                value = set_layout_values(df_meta_data)[8],
                 inline=True,
                 ),
             html.Br(),
@@ -358,7 +384,36 @@ def put_upload_content_in_workingdirectory(uploaded_filenames, uploaded_file_con
 @app.long_callback(
 #@app.callback(
     Output('hidden-div2', 'children'),
+    
+
+    
+    Output(component_id="dropdown_periode", component_property="options"),
+    Output(component_id="parameter_choice", component_property="options"),
+    Output(component_id="dropdown_pilotage", component_property="options"),
+    Output(component_id="dropdown_azimut", component_property="options"),
+    Output(component_id="dropdown_ecart", component_property="options"),
+    Output(component_id="dropdown_ecarty", component_property="options"),
+    Output(component_id="hauteur", component_property="options"),
+    Output(component_id="tracker", component_property="options"),
+    Output(component_id="units_choice", component_property="options"),
+
+    Output(component_id="dropdown_periode", component_property="value"),
+    Output(component_id="parameter_choice", component_property="value"),
+    Output(component_id="dropdown_pilotage", component_property="value"),
+    Output(component_id="dropdown_azimut", component_property="value"),
+    Output(component_id="dropdown_ecart", component_property="value"),
+    Output(component_id="dropdown_ecarty", component_property="value"),
+    Output(component_id="hauteur", component_property="value"),
+    Output(component_id="tracker", component_property="value"),
+    Output(component_id="units_choice", component_property="value"),
+
+    # Output(component_id="graph", component_property="figure"),
+    # Output(component_id="table", component_property="children"),
+    # Output(component_id="img_config", component_property="children"), 
+    # Output(component_id="img_heatmap", component_property="children"), 
+
     Input("runsript", "n_clicks"),
+
     running=[
         (Output("runsript", "disabled"), True, False),
         (
@@ -379,8 +434,12 @@ def run_script(n_clicks):
     
     run_meta_analyse()
     df_meta_data = format_meta_data()
-    app.layout = create_layout(df_meta_data)
-    return html.Meta(httpEquiv="refresh",content="1")
+    options = set_layout_options(df_meta_data)
+    values = set_layout_values(df_meta_data)
+    #app.layout = create_layout(df_meta_data)
+    
+    #return html.Meta(httpEquiv="refresh",content="3"),
+    return html.Div(), options[0], options[1],options[2],options[3],options[4],options[5],options[6],options[7],options[8],values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7],values[8]#, select_data_use_for_display(df_meta_data)
 
 # Clear data, i.e : delete /img folder and sauvegarde file
 @app.callback(
