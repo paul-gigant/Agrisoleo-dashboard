@@ -128,7 +128,6 @@ def save_file(name, content):
     with open(name, "wb") as fp:
         fp.write(base64.decodebytes(data))
 
-# Not used for now
 def set_layout_options(df_meta_data):
     ''' Layout in order : "dropdown_periode","parameter_choice", dropdown_pilotage,dropdown_azimut
     dropdown_ecart,dropdown_ecarty,hauteur,tracker,units_choice 
@@ -165,7 +164,7 @@ def set_layout_values(df_meta_data):
 
 # Creation of the layout
 def create_layout(df_meta_data):
-   return html.Div(children=[ 
+    return html.Div(children=[ 
         html.Img(src='https://www.agrisoleo.fr/images/logo.gif'),
         html.Div(children=[
             html.H1('AGRISOLEO : Data Vizualisation Tool', style={'textAlign': 'center'}),
@@ -382,10 +381,7 @@ def put_upload_content_in_workingdirectory(uploaded_filenames, uploaded_file_con
         
 # Run meta_analyse_v3.py
 @app.long_callback(
-#@app.callback(
     Output('hidden-div2', 'children'),
-    
-
     
     Output(component_id="dropdown_periode", component_property="options"),
     Output(component_id="parameter_choice", component_property="options"),
@@ -396,7 +392,6 @@ def put_upload_content_in_workingdirectory(uploaded_filenames, uploaded_file_con
     Output(component_id="hauteur", component_property="options"),
     Output(component_id="tracker", component_property="options"),
     Output(component_id="units_choice", component_property="options"),
-
     Output(component_id="dropdown_periode", component_property="value"),
     Output(component_id="parameter_choice", component_property="value"),
     Output(component_id="dropdown_pilotage", component_property="value"),
@@ -406,12 +401,7 @@ def put_upload_content_in_workingdirectory(uploaded_filenames, uploaded_file_con
     Output(component_id="hauteur", component_property="value"),
     Output(component_id="tracker", component_property="value"),
     Output(component_id="units_choice", component_property="value"),
-
-    # Output(component_id="graph", component_property="figure"),
-    # Output(component_id="table", component_property="children"),
-    # Output(component_id="img_config", component_property="children"), 
-    # Output(component_id="img_heatmap", component_property="children"), 
-
+    
     Input("runsript", "n_clicks"),
 
     running=[
@@ -432,14 +422,15 @@ def run_script(n_clicks):
     if not n_clicks:
         raise PreventUpdate
     
-    run_meta_analyse()
-    df_meta_data = format_meta_data()
+    if n_clicks:
+        run_meta_analyse()
+        df_meta_data = format_meta_data()
+    
     options = set_layout_options(df_meta_data)
     values = set_layout_values(df_meta_data)
     #app.layout = create_layout(df_meta_data)
     
-    #return html.Meta(httpEquiv="refresh",content="3"),
-    return html.Div(), options[0], options[1],options[2],options[3],options[4],options[5],options[6],options[7],options[8],values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7],values[8]#, select_data_use_for_display(df_meta_data)
+    return  html.Div(), options[0], options[1],options[2],options[3],options[4],options[5],options[6],options[7],options[8],values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7],values[8]
 
 # Clear data, i.e : delete /img folder and sauvegarde file
 @app.callback(
@@ -465,7 +456,10 @@ def reset(n_clicks):
             os.remove(file)
     
     df_meta_data = format_meta_data()
+    set_layout_options(df_meta_data)
+    set_layout_options(df_meta_data)
     app.layout = create_layout(df_meta_data)
+    
     return html.Meta(httpEquiv="refresh",content="1")
 
 # Callback for display
@@ -483,15 +477,15 @@ def reset(n_clicks):
     Input(component_id="hauteur", component_property="value"),
     Input(component_id="tracker", component_property="value"),
     Input(component_id="units_choice", component_property="value"),
+      
 )
 def select_data_use_for_display(period,parameter,pilotage,azimut,ecart,ecarty,hauteur,tracker,units):
     ''' Process the result of the meta_analyse in order for proper display in the layout '''
 
     global df_meta_data
     df_meta_data = format_meta_data()
-
-    # Filtering for period
     
+    # Filtering for period
     mask_periode = df_meta_data['start_date'] == period
     df_periode = df_meta_data[mask_periode]
 
