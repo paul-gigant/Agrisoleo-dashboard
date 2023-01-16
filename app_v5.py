@@ -10,6 +10,7 @@
 from dash import Dash, html, dcc, Input, Output, State
 from dash.exceptions import PreventUpdate
 from dash.long_callback import DiskcacheLongCallbackManager
+import dash_bootstrap_components as dbc
 import diskcache
 import plotly.express as px
 import pandas as pd
@@ -181,6 +182,13 @@ def create_layout(df_meta_data):
             multiple=True,
         ),
         html.Div(id='hidden-div-upload', style={'display':'none'}),
+
+        html.Div([
+            dcc.ConfirmDialog(
+                id='confirm-upload',
+                message='Les données excel ont été correctement importées.',
+            ),
+        ]),
 
         html.Div(children=[
             html.Div(children=[
@@ -369,6 +377,7 @@ app.layout= create_layout(df_meta_data)
 # Take all the .xlsx files in the uploader folder and place them in the working directory
 @app.callback(
     Output('hidden-div-upload','children'),
+    Output('confirm-upload', 'displayed'),
     Input('dataload','filename'),
     Input('dataload','contents'),
     prevent_initial_call=True,
@@ -378,6 +387,8 @@ def put_upload_content_in_workingdirectory(uploaded_filenames, uploaded_file_con
         
     for name, data in zip(uploaded_filenames, uploaded_file_contents):
         save_file(name, data)
+    
+    return html.Div(), True
         
 # Run meta_analyse_v3.py
 @app.long_callback(
@@ -428,7 +439,6 @@ def run_script(n_clicks):
     
     options = set_layout_options(df_meta_data)
     values = set_layout_values(df_meta_data)
-    #app.layout = create_layout(df_meta_data)
     
     return  html.Div(), options[0], options[1],options[2],options[3],options[4],options[5],options[6],options[7],options[8],values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7],values[8]
 
